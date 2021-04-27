@@ -52,7 +52,7 @@ workflows:
             branches:
               ignore: /.*/
       - release:
-          context: driftctl
+          context: lambda-env-updater
           requires:
             - build
             - test
