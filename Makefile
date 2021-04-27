@@ -15,5 +15,5 @@ build:
 release: install-tools
 	gox -parallel=2\
 	  -osarch="linux/386 linux/amd64 linux/arm linux/arm64 darwin/amd64 darwin/arm64 windows/386 windows/amd64"\
-	  -output "bin/driftctl_{{.OS}}_{{.Arch}}"\
+	  -output "bin/lambda-env-updater_{{.OS}}_{{.Arch}}"\
 	  ./
