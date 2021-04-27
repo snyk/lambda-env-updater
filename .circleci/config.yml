@@ -16,19 +16,6 @@ jobs:
     steps:
       - checkout
       - run: make test-coverage
-      - run:
-          name: Check Codecov
-          command: |
-            curl -s -o codecov https://codecov.io/bash \
-              && VERSION=$(grep 'VERSION=\".*\"' codecov | cut -d'"' -f2) \
-              && shasum -a 512 -c --ignore-missing <(curl -s https://raw.githubusercontent.com/codecov/codecov-bash/${VERSION}/SHA512SUM)
-      - run:
-          name: Codecov upload
-          command: |
-            chmod +x codecov
-            ./codecov
-      - store_test_results:
-          path: ./
   release:
     environment:
       CIRCLE_PROJECT_USERNAME: cloudskiff
