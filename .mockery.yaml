@@ -1,0 +1,2 @@
+# Sometimes mock use unexported struct
+inpackage: true

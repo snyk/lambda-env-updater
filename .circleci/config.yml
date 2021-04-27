@@ -1,0 +1,76 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: golang:1.16.2
+    steps:
+      - checkout
+      - run: make release
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - bin/
+  test:
+    docker:
+      - image: golang:1.16.2
+    steps:
+      - checkout
+      - run: make test-coverage
+      - run:
+          name: Check Codecov
+          command: |
+            curl -s -o codecov https://codecov.io/bash \
+              && VERSION=$(grep 'VERSION=\".*\"' codecov | cut -d'"' -f2) \
+              && shasum -a 512 -c --ignore-missing <(curl -s https://raw.githubusercontent.com/codecov/codecov-bash/${VERSION}/SHA512SUM)
+      - run:
+          name: Codecov upload
+          command: |
+            chmod +x codecov
+            ./codecov
+      - store_test_results:
+          path: ./
+  release:
+    environment:
+      CIRCLE_PROJECT_USERNAME: cloudskiff
+      CIRCLE_PROJECT_REPONAME: lambda-env-updater
+    docker:
+      - image: cibuilds/github:0.13
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n ${CIRCLE_TAG} ${CIRCLE_TAG} ./bin/
+workflows:
+  push:
+    jobs:
+      - test:
+          filters:
+            branches:
+              ignore:
+                - main
+  release:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - test:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - release:
+          context: driftctl
+          requires:
+            - build
+            - test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
