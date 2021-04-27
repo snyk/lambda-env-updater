@@ -14,7 +14,9 @@ func NewLambda(client lambdaiface.LambdaAPI) *Lambda {
 }
 
 func (l *Lambda) ReadEnv(functionName string) (Env, error) {
-	config, err := l.client.GetFunctionConfiguration(&lambda.GetFunctionConfigurationInput{FunctionName: &functionName})
+	config, err := l.client.GetFunctionConfiguration(&lambda.GetFunctionConfigurationInput{
+		FunctionName: &functionName,
+	})
 	if err != nil {
 		return nil, err
 	}
