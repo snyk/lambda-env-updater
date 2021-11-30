@@ -15,3 +15,7 @@ Unfortunately this command replaces the whole environemnt with the newly provide
 ```shell
 lambda-env-updater -name function-name -env FOO=BAR -env BAR=FOO
 ```
+
+## Contributing
+
+Should you wish to make a contribution please open a pull request against this repository with a clear description of the change with tests demonstrating the functionality. You will also need to agree to the [Contributor Agreement](./Contributor-Agreement.md) before the code can be accepted and merged.
