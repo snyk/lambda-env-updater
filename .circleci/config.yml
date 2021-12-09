@@ -1,4 +1,17 @@
 version: 2.1
+only_maintainers: &only_maintainers
+  filters:
+    branches:
+      # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
+      ignore: /pull\/[0-9]+/
+
+only_branches: &only_branches
+  filters:
+    branches:
+      ignore:
+        - main
+orbs:
+  snyk: snyk/snyk@1.1.2
 jobs:
   build:
     docker:
@@ -29,14 +42,42 @@ jobs:
           name: "Publish Release on GitHub"
           command: |
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n ${CIRCLE_TAG} ${CIRCLE_TAG} ./bin/
+  security-oss:
+    docker:
+        - image: cimg/go:1.16.2
+    steps:
+        - checkout
+        - snyk/scan:
+              severity-threshold: medium
+              monitor-on-build: true
+              project: ${CIRCLE_PROJECT_REPONAME}
+              organization: snyk-iac-group-seceng
+  security-code:
+    docker:
+        - image: cimg/go:1.17.2
+    steps:
+        - checkout
+        - snyk/scan:
+              command: code test
+              severity-threshold: medium
+              monitor-on-build: false
+              project: ${CIRCLE_PROJECT_REPONAME}
+              organization: snyk-iac-group-seceng
 workflows:
   push:
     jobs:
       - test:
-          filters:
-            branches:
-              ignore:
-                - main
+        <<: *only_branches
+      - security-code:
+          name: Snyk code
+          context:
+            - driftctl-snyk
+          <<: *only_maintainers
+      - security-oss:
+          name: Snyk test
+          context:
+            - driftctl-snyk
+          <<: *only_maintainers
   release:
     jobs:
       - build:
