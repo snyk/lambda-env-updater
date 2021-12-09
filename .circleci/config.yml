@@ -1,4 +1,9 @@
 version: 2.1
+only_branches: &only_branches
+  filters:
+    branches:
+      ignore:
+        - main
 orbs:
   snyk: snyk/snyk@1.1.2
 jobs:
@@ -56,10 +61,7 @@ workflows:
   push:
     jobs:
       - test:
-          filters:
-            branches:
-              ignore:
-                - main
+        <<: *only_branches
       - security-code:
           filters:
             branches:
