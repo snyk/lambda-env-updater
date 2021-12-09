@@ -1,4 +1,10 @@
 version: 2.1
+only_maintainers: &only_maintainers
+  filters:
+    branches:
+      # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
+      ignore: /pull\/[0-9]+/
+
 only_branches: &only_branches
   filters:
     branches:
@@ -63,23 +69,15 @@ workflows:
       - test:
         <<: *only_branches
       - security-code:
-          filters:
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
           name: Snyk code
           context:
-            - snyk
-          <<: *only_branches
+            - driftctl-snyk
+          <<: *only_maintainers
       - security-oss:
-          filters:
-            branches:
-              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
-              ignore: /pull\/[0-9]+/
           name: Snyk test
           context:
-            - snyk
-          <<: *only_branches
+            - driftctl-snyk
+          <<: *only_maintainers
   release:
     jobs:
       - build:
