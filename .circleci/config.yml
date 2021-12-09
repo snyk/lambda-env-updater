@@ -1,4 +1,6 @@
 version: 2.1
+orbs:
+  snyk: snyk/snyk@1.1.2
 jobs:
   build:
     docker:
@@ -29,6 +31,27 @@ jobs:
           name: "Publish Release on GitHub"
           command: |
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n ${CIRCLE_TAG} ${CIRCLE_TAG} ./bin/
+  security-oss:
+    docker:
+        - image: cimg/go:1.16.2
+    steps:
+        - checkout
+        - snyk/scan:
+              severity-threshold: medium
+              monitor-on-build: true
+              project: ${CIRCLE_PROJECT_REPONAME}
+              organization: snyk-iac-group-seceng
+  security-code:
+    docker:
+        - image: cimg/go:1.17.2
+    steps:
+        - checkout
+        - snyk/scan:
+              command: code test
+              severity-threshold: medium
+              monitor-on-build: false
+              project: ${CIRCLE_PROJECT_REPONAME}
+              organization: snyk-iac-group-seceng
 workflows:
   push:
     jobs:
@@ -37,6 +60,24 @@ workflows:
             branches:
               ignore:
                 - main
+      - security-code:
+          filters:
+            branches:
+              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
+              ignore: /pull\/[0-9]+/
+          name: Snyk code
+          context:
+            - snyk
+          <<: *only_branches
+      - security-oss:
+          filters:
+            branches:
+              # Forked pull requests have CIRCLE_BRANCH set to pull/XXX
+              ignore: /pull\/[0-9]+/
+          name: Snyk test
+          context:
+            - snyk
+          <<: *only_branches
   release:
     jobs:
       - build:
