@@ -48,8 +48,8 @@ jobs:
     steps:
         - checkout
         - snyk/scan:
-              severity-threshold: medium
-              monitor-on-build: true
+              severity-threshold: high
+              monitor-on-build: false
               project: ${CIRCLE_PROJECT_REPONAME}
               organization: cloud-cloud
   security-code:
@@ -59,7 +59,7 @@ jobs:
         - checkout
         - snyk/scan:
               command: code test
-              severity-threshold: medium
+              severity-threshold: high
               monitor-on-build: false
               project: ${CIRCLE_PROJECT_REPONAME}
               organization: cloud-cloud
