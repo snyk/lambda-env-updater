@@ -11,6 +11,7 @@ only_branches: &only_branches
       ignore:
         - main
 orbs:
+  prodsec: snyk/prodsec-orb@1.0
   snyk: snyk/snyk@1.1.2
 jobs:
   build:
@@ -68,6 +69,11 @@ workflows:
     jobs:
       - test:
         <<: *only_branches
+      - prodsec/secrets-scan:
+          name: Scan repository for secrets
+          context:
+            - snyk-bot-slack
+          channel: group-infrastructure-as-code-alerts        
       - security-code:
           name: Snyk code
           context:
