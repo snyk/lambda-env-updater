@@ -11,7 +11,7 @@ only_branches: &only_branches
       ignore:
         - main
 orbs:
-  prodsec: snyk/prodsec-orb@1.0
+  prodsec: snyk/prodsec-orb@1
   snyk: snyk/snyk@1.1.2
 jobs:
   build:
@@ -43,27 +43,15 @@ jobs:
           name: "Publish Release on GitHub"
           command: |
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n ${CIRCLE_TAG} ${CIRCLE_TAG} ./bin/
-  security-oss:
+  security-scans:
     docker:
-        - image: cimg/go:1.16.2
+      - image: cimg/go:1.16.2
+    resource_class: small
     steps:
-        - checkout
-        - snyk/scan:
-              severity-threshold: high
-              monitor-on-build: false
-              project: ${CIRCLE_PROJECT_REPONAME}
-              organization: cloud-cloud
-  security-code:
-    docker:
-        - image: cimg/go:1.17.2
-    steps:
-        - checkout
-        - snyk/scan:
-              command: code test
-              severity-threshold: high
-              monitor-on-build: false
-              project: ${CIRCLE_PROJECT_REPONAME}
-              organization: cloud-cloud
+      - checkout
+      - prodsec/security_scans:
+          mode: auto
+
 workflows:
   push:
     jobs:
@@ -74,16 +62,10 @@ workflows:
           context:
             - snyk-bot-slack
           channel: group-infrastructure-as-code-alerts        
-      - security-code:
-          name: Snyk code
+      - security-scans:
+          name: Security Scans
           context:
-            - driftctl-snyk
-          <<: *only_maintainers
-      - security-oss:
-          name: Snyk test
-          context:
-            - driftctl-snyk
-          <<: *only_maintainers
+            - analysis-iac
   release:
     jobs:
       - build:
